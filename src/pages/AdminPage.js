@@ -15,8 +15,16 @@ import {
   FaHome,
   FaMedal
 } from "react-icons/fa";
-
-const API_URL = "http://localhost:3001/api";
+import { db } from "../firebase";
+import { 
+  collection, 
+  getDocs, 
+  doc, 
+  getDoc, 
+  updateDoc, 
+  setDoc, 
+  deleteDoc 
+} from "firebase/firestore";
 
 function AdminPage() {
   const [matches, setMatches] = useState([]);
@@ -29,22 +37,27 @@ function AdminPage() {
 
   const loadData = useCallback(async () => {
     try {
-      const [matchesRes, teamsRes, countRes, statusRes] = await Promise.all([
-        fetch(`${API_URL}/matches`),
-        fetch(`${API_URL}/teams`),
-        fetch(`${API_URL}/teams/count`),
-        fetch(`${API_URL}/tournament/status`)
-      ]);
-
-      const matchesData = await matchesRes.json();
-      const teamsData = await teamsRes.json();
-      const countData = await countRes.json();
-      const statusData = await statusRes.json();
-
+      // Load matches
+      const matchesSnapshot = await getDocs(collection(db, "matches"));
+      const matchesData = matchesSnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
       setMatches(matchesData);
+
+      // Load teams
+      const teamsSnapshot = await getDocs(collection(db, "teams"));
+      const teamsData = teamsSnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
       setTeams(teamsData);
-      setTeamCount(countData.count);
-      setTournamentStatus(statusData);
+      setTeamCount(teamsData.length);
+
+      // Load tournament status
+      const statusDoc = await getDoc(doc(db, "tournament", "status"));
+      setTournamentStatus(statusDoc.exists() ? statusDoc.data() : { status: "Not Started" });
+
       setLoading(false);
     } catch (error) {
       console.error("Error loading data:", error);
@@ -64,95 +77,278 @@ function AdminPage() {
     setTimeout(() => setMessage({ text: "", type: "" }), 5000);
   }
 
+  // Generate bracket
   async function handleStartTournament() {
     if (teamCount !== 8) {
       showMessage(`Need exactly 8 teams. Currently: ${teamCount} teams.`, "error");
       return;
     }
 
+    if (matches.length > 0) {
+      showMessage("Tournament already started!", "error");
+      return;
+    }
+
     setActionLoading("start");
     try {
-      const response = await fetch(`${API_URL}/tournament/start`, { method: "POST" });
-      const data = await response.json();
+      // Get all teams
+      const teamsSnapshot = await getDocs(collection(db, "teams"));
+      const allTeams = teamsSnapshot.docs.map(doc => ({
+        country: doc.id,
+        teamId: doc.id,
+        teamRating: doc.data().teamRating,
+        manager: doc.data().manager,
+        players: doc.data().players
+      }));
 
-      if (response.ok) {
-        showMessage("Tournament started! Bracket generated.", "success");
-        await loadData();
-      } else {
-        showMessage(data.error || "Failed to start tournament", "error");
+      // Shuffle teams
+      const shuffled = allTeams.sort(() => Math.random() - 0.5);
+
+      // Create Quarter-Finals
+      const qfMatches = [
+        { matchId: "QF1", round: "Quarter-Final", matchNumber: 1, team1: shuffled[0], team2: shuffled[1] },
+        { matchId: "QF2", round: "Quarter-Final", matchNumber: 2, team1: shuffled[2], team2: shuffled[3] },
+        { matchId: "QF3", round: "Quarter-Final", matchNumber: 3, team1: shuffled[4], team2: shuffled[5] },
+        { matchId: "QF4", round: "Quarter-Final", matchNumber: 4, team1: shuffled[6], team2: shuffled[7] }
+      ];
+
+      // Create Semi-Finals (TBD teams)
+      const sfMatches = [
+        { 
+          matchId: "SF1", 
+          round: "Semi-Final", 
+          matchNumber: 1, 
+          team1: { country: "TBD", teamId: "TBD" }, 
+          team2: { country: "TBD", teamId: "TBD" },
+          dependsOn: ["QF1", "QF2"]
+        },
+        { 
+          matchId: "SF2", 
+          round: "Semi-Final", 
+          matchNumber: 2, 
+          team1: { country: "TBD", teamId: "TBD" }, 
+          team2: { country: "TBD", teamId: "TBD" },
+          dependsOn: ["QF3", "QF4"]
+        }
+      ];
+
+      // Create Final
+      const finalMatch = {
+        matchId: "FINAL",
+        round: "Final",
+        matchNumber: 1,
+        team1: { country: "TBD", teamId: "TBD" },
+        team2: { country: "TBD", teamId: "TBD" },
+        dependsOn: ["SF1", "SF2"]
+      };
+
+      // Add common fields
+      const allMatches = [...qfMatches, ...sfMatches, finalMatch].map(match => ({
+        ...match,
+        status: match.team1.country === "TBD" ? "locked" : "pending",
+        score: { team1: null, team2: null },
+        goalScorers: [],
+        winner: null,
+        nextMatch: null,
+        timestamp: null
+      }));
+
+      // Set nextMatch references
+      allMatches[0].nextMatch = "SF1";
+      allMatches[1].nextMatch = "SF1";
+      allMatches[2].nextMatch = "SF2";
+      allMatches[3].nextMatch = "SF2";
+      allMatches[4].nextMatch = "FINAL";
+      allMatches[5].nextMatch = "FINAL";
+
+      // Save to Firebase
+      for (const match of allMatches) {
+        await setDoc(doc(db, "matches", match.matchId), match);
       }
+
+      // Update tournament status
+      await setDoc(doc(db, "tournament", "status"), {
+        status: "In Progress",
+        startedAt: new Date().toISOString()
+      });
+
+      showMessage("Tournament started! Bracket generated.", "success");
+      await loadData();
     } catch (error) {
-      showMessage("Error starting tournament", "error");
+      console.error("Error starting tournament:", error);
+      showMessage("Failed to start tournament", "error");
     } finally {
       setActionLoading(null);
     }
   }
 
+  // Reset tournament
   async function handleResetTournament() {
     if (!window.confirm("Reset tournament? This will clear all matches.")) return;
 
     setActionLoading("reset");
     try {
-      const response = await fetch(`${API_URL}/tournament/reset`, { method: "POST" });
-      const data = await response.json();
-
-      if (response.ok) {
-        showMessage("Tournament reset successfully!", "success");
-        await loadData();
-      } else {
-        showMessage(data.error || "Failed to reset", "error");
+      // Delete all matches
+      const matchesSnapshot = await getDocs(collection(db, "matches"));
+      for (const matchDoc of matchesSnapshot.docs) {
+        await deleteDoc(matchDoc.ref);
       }
+
+      // Reset tournament status
+      await setDoc(doc(db, "tournament", "status"), {
+        status: "Not Started"
+      });
+
+      showMessage("Tournament reset successfully!", "success");
+      await loadData();
     } catch (error) {
-      showMessage("Error resetting tournament", "error");
+      console.error("Error resetting:", error);
+      showMessage("Failed to reset", "error");
     } finally {
       setActionLoading(null);
     }
   }
 
+  // Simulate match (client-side)
   async function handleSimulateMatch(matchId) {
     setActionLoading(`simulate-${matchId}`);
     try {
-      const response = await fetch(`${API_URL}/match/simulate`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ matchId }),
+      const matchRef = doc(db, "matches", matchId);
+      const matchSnap = await getDoc(matchRef);
+      
+      if (!matchSnap.exists()) {
+        showMessage("Match not found", "error");
+        return;
+      }
+
+      const match = matchSnap.data();
+
+      if (match.status !== "pending") {
+        showMessage("Match not available", "error");
+        return;
+      }
+
+      // Get team ratings
+      const team1Doc = await getDoc(doc(db, "teams", match.team1.teamId));
+      const team2Doc = await getDoc(doc(db, "teams", match.team2.teamId));
+      
+      const rating1 = team1Doc.data()?.teamRating || 50;
+      const rating2 = team2Doc.data()?.teamRating || 50;
+
+      // Simple simulation
+      const prob1 = rating1 / (rating1 + rating2);
+      const prob2 = rating2 / (rating1 + rating2);
+
+      let score1 = Math.round(Math.max(0, (Math.random() + prob1) * 3));
+      let score2 = Math.round(Math.max(0, (Math.random() + prob2) * 3));
+
+      // Generate goal scorers
+      const goalScorers = [];
+      const team1Players = team1Doc.data()?.players || [];
+      const team2Players = team2Doc.data()?.players || [];
+
+      for (let i = 0; i < score1; i++) {
+        const player = team1Players[Math.floor(Math.random() * team1Players.length)];
+        goalScorers.push({
+          player: player?.name || "Unknown",
+          team: match.team1.country,
+          minute: Math.floor(Math.random() * 90) + 1
+        });
+      }
+
+      for (let i = 0; i < score2; i++) {
+        const player = team2Players[Math.floor(Math.random() * team2Players.length)];
+        goalScorers.push({
+          player: player?.name || "Unknown",
+          team: match.team2.country,
+          minute: Math.floor(Math.random() * 90) + 1
+        });
+      }
+
+      goalScorers.sort((a, b) => a.minute - b.minute);
+
+      // Determine winner
+      let winner;
+      let penaltyShootout = null;
+
+      if (score1 > score2) {
+        winner = { ...match.team1, wonBy: "normal" };
+      } else if (score2 > score1) {
+        winner = { ...match.team2, wonBy: "normal" };
+      } else {
+        // Penalties
+        const team1Pens = Math.floor(Math.random() * 6);
+        const team2Pens = Math.floor(Math.random() * 6);
+        
+        winner = team1Pens >= team2Pens ? { ...match.team1, wonBy: "penalties" } : { ...match.team2, wonBy: "penalties" };
+        
+        penaltyShootout = {
+          score: { team1: team1Pens, team2: team2Pens },
+          winner: winner.country,
+          penalties: {
+            team1: Array(5).fill(0).map(() => ({
+              player: team1Players[Math.floor(Math.random() * team1Players.length)]?.name,
+              scored: Math.random() > 0.3
+            })),
+            team2: Array(5).fill(0).map(() => ({
+              player: team2Players[Math.floor(Math.random() * team2Players.length)]?.name,
+              scored: Math.random() > 0.3
+            }))
+          }
+        };
+      }
+
+      // Update match
+      await updateDoc(matchRef, {
+        status: "completed",
+        score: { team1: score1, team2: score2 },
+        goalScorers: goalScorers,
+        winner: winner,
+        penaltyShootout: penaltyShootout,
+        simulationType: "simulated",
+        timestamp: new Date().toISOString()
       });
 
-      if (response.ok) {
-        showMessage(`Match ${matchId} simulated!`, "success");
-        await loadData();
-      } else {
-        const data = await response.json();
-        showMessage(data.error || "Failed to simulate", "error");
+      // Update next round
+      if (match.nextMatch) {
+        const nextMatchRef = doc(db, "matches", match.nextMatch);
+        const nextMatchSnap = await getDoc(nextMatchRef);
+        
+        if (nextMatchSnap.exists()) {
+          const nextMatch = nextMatchSnap.data();
+          const updates = {};
+
+          if (nextMatch.dependsOn[0] === matchId) {
+            updates.team1 = winner;
+          } else if (nextMatch.dependsOn[1] === matchId) {
+            updates.team2 = winner;
+          }
+
+          // Check if both teams are ready
+          if (nextMatch.team1.country !== "TBD" || updates.team1) {
+            if (nextMatch.team2.country !== "TBD" || updates.team2) {
+              updates.status = "pending";
+            }
+          }
+
+          await updateDoc(nextMatchRef, updates);
+        }
       }
+
+      showMessage(`Match ${matchId} simulated!`, "success");
+      await loadData();
     } catch (error) {
-      showMessage("Error simulating match", "error");
+      console.error("Error simulating:", error);
+      showMessage("Failed to simulate", "error");
     } finally {
       setActionLoading(null);
     }
   }
 
+  // Play with AI (simplified - just simulates)
   async function handlePlayMatch(matchId) {
-    setActionLoading(`play-${matchId}`);
-    try {
-      const response = await fetch(`${API_URL}/match/play`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ matchId }),
-      });
-
-      if (response.ok) {
-        showMessage(`Match ${matchId} played with AI!`, "success");
-        await loadData();
-      } else {
-        const data = await response.json();
-        showMessage(data.error || "Failed to play", "error");
-      }
-    } catch (error) {
-      showMessage("Error playing match", "error");
-    } finally {
-      setActionLoading(null);
-    }
+    showMessage("AI commentary not available in client-only mode. Using quick simulate.", "info");
+    await handleSimulateMatch(matchId);
   }
 
   if (loading) {
@@ -170,7 +366,6 @@ function AdminPage() {
   const totalMatches = matches.length;
   const progress = totalMatches > 0 ? (completedMatches / totalMatches) * 100 : 0;
 
-  // Group matches by round
   const qfMatches = matches.filter(m => m.round === "Quarter-Final");
   const sfMatches = matches.filter(m => m.round === "Semi-Final");
   const finalMatch = matches.find(m => m.round === "Final");
@@ -282,7 +477,6 @@ function AdminPage() {
           </div>
         ) : (
           <>
-            {/* Quarter-Finals */}
             {qfMatches.length > 0 && (
               <div className="round-section">
                 <h3 className="round-title">Quarter-Finals</h3>
@@ -300,7 +494,6 @@ function AdminPage() {
               </div>
             )}
 
-            {/* Semi-Finals */}
             {sfMatches.length > 0 && (
               <div className="round-section">
                 <h3 className="round-title">Semi-Finals</h3>
@@ -318,7 +511,6 @@ function AdminPage() {
               </div>
             )}
 
-            {/* Final */}
             {finalMatch && (
               <div className="round-section">
                 <h3 className="round-title final">🏆 Grand Final</h3>

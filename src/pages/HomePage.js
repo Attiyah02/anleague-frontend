@@ -22,7 +22,7 @@ function HomePage() {
           backgroundImage: `linear-gradient(
             rgba(0, 0, 0, 0.75),
             rgba(0, 0, 0, 0.75)
-          ), url(${process.env.PUBLIC_URL}/images/stadium-dark.jpg)`,
+          ), url(/images/stadium-dark.jpg)`,
           backgroundSize: "cover",
           backgroundPosition: "center",
           backgroundAttachment: "fixed",

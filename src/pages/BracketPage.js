@@ -146,7 +146,7 @@ function BracketPage() {
     backgroundImage: `linear-gradient(
       rgba(0, 0, 0, 0.7),
       rgba(0, 0, 0, 0.7)
-    ), url(${process.env.PUBLIC_URL}/images/stadium-dark.jpg)`,
+    ), url(/images/stadium-dark.jpg)`,
     backgroundSize: "cover",
     backgroundPosition: "center",
     backgroundAttachment: "fixed",

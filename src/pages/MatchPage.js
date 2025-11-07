@@ -72,7 +72,7 @@ function MatchPage() {
         backgroundImage: `linear-gradient(
           rgba(0, 0, 0, 0.8),
           rgba(0, 0, 0, 0.8)
-        ), url(${process.env.PUBLIC_URL}/images/stadium-dark.jpg)`,
+        ), url(/images/stadium-dark.jpg)`,
         backgroundSize: "cover",
         backgroundPosition: "center",
         backgroundAttachment: "fixed",

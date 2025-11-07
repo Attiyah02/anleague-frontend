@@ -1,0 +1,384 @@
+/* ---------------------- General ---------------------- */
+.top-scorers-page {
+  background-color: #f8f8f8;
+  min-height: 100vh;
+}
+
+/* ---------------------- Hero Section ---------------------- */
+.hero-section {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 100px 20px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.hero-content {
+  position: relative;
+  z-index: 1;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.hero-title {
+  font-size: 3.2em;
+  margin-bottom: 15px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+}
+
+.hero-title svg {
+  color: #d4af37;
+}
+
+.hero-title .year {
+  color: #f1c40f;
+}
+
+.hero-tagline {
+  font-size: 1.3em;
+  color: #f1f1f1;
+}
+
+/* ---------------------- Main Content ---------------------- */
+.scorers-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 60px 20px;
+}
+
+/* ---------------------- Stats Summary ---------------------- */
+.stats-summary {
+  display: flex;
+  justify-content: center;
+  gap: 30px;
+  margin-bottom: 60px;
+  flex-wrap: wrap;
+}
+
+.stat-box {
+  background: white;
+  border: 3px solid #004225;
+  padding: 30px 40px;
+  border-radius: 12px;
+  min-width: 180px;
+  text-align: center;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.stat-box:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 20px rgba(0, 66, 37, 0.2);
+}
+
+.stat-icon {
+  font-size: 2.5rem;
+  color: #d4af37;
+  margin-bottom: 15px;
+}
+
+.stat-number {
+  font-size: 3rem;
+  font-weight: 800;
+  color: #006b3f;
+  margin-bottom: 10px;
+}
+
+.stat-label {
+  color: #666;
+  font-size: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+/* ---------------------- Section Title ---------------------- */
+.section-title {
+  font-size: 2.4em;
+  color: #004225;
+  font-weight: 700;
+  margin-bottom: 40px;
+  text-align: center;
+  position: relative;
+}
+
+.section-title::after {
+  content: "";
+  position: absolute;
+  width: 80px;
+  height: 4px;
+  background-color: #d4af37;
+  bottom: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-radius: 3px;
+}
+
+/* ---------------------- Golden Boot Podium ---------------------- */
+.golden-boot-section {
+  background: rgb(30, 44, 34);
+  padding: 50px 30px;
+  border-radius: 16px;
+  margin-bottom: 50px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+}
+
+.podium {
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  gap: 20px;
+  margin-top: 40px;
+  flex-wrap: wrap;
+}
+
+.podium-card {
+  background: linear-gradient(135deg, #f8f8f8 0%, #ffffff 100%);
+  border-radius: 12px;
+  padding: 30px 20px;
+  text-align: center;
+  min-width: 220px;
+  border: 3px solid #e0e0e0;
+  transition: transform 0.3s ease;
+}
+
+.podium-card:hover {
+  transform: translateY(-10px);
+}
+
+.podium-card.first {
+  border-color: #d4af37;
+  background: linear-gradient(135deg, #fff9e6 0%, #ffffff 100%);
+  padding: 40px 20px;
+  transform: scale(1.05);
+}
+
+.podium-card.second {
+  border-color: #c0c0c0;
+  background: linear-gradient(135deg, #f5f5f5 0%, #ffffff 100%);
+}
+
+.podium-card.third {
+  border-color: #cd7f32;
+  background: linear-gradient(135deg, #fff0e6 0%, #ffffff 100%);
+}
+
+.podium-rank {
+  font-size: 3.5rem;
+  margin-bottom: 15px;
+}
+
+.podium-card.first .podium-rank {
+  font-size: 4rem;
+}
+
+.podium-player {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #004225;
+  margin-bottom: 8px;
+}
+
+.podium-team {
+  color: #666;
+  font-size: 1rem;
+  margin-bottom: 15px;
+}
+
+.podium-goals {
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: #006b3f;
+}
+
+.golden-boot-badge {
+  background: linear-gradient(135deg, #d4af37 0%, #f1c40f 100%);
+  color: #0c0c0c;
+  padding: 8px 16px;
+  border-radius: 20px;
+  margin-top: 15px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+/* ---------------------- Scorers List ---------------------- */
+.scorers-list-section {
+  background: rgb(30, 44, 34);
+  padding: 50px 30px;
+  border-radius: 16px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+}
+
+.scorers-table {
+  overflow-x: auto;
+}
+
+.table-header,
+.table-row {
+  display: grid;
+  grid-template-columns: 120px 1fr 200px 120px;
+  padding: 18px 20px;
+  align-items: center;
+  gap: 15px;
+}
+
+.table-header {
+  background: #004225;
+  color: white;
+  font-weight: 700;
+  font-size: 0.95rem;
+  text-transform: uppercase;
+  border-radius: 8px;
+  letter-spacing: 0.5px;
+}
+
+.table-row {
+  border-bottom: 2px solid #f0f0f0;
+  transition: background 0.2s ease;
+}
+
+.table-row:hover {
+  background: #fafafa;
+}
+
+.table-row.podium {
+  background: linear-gradient(90deg, #fff8e1 0%, #ffffff 100%);
+  font-weight: 600;
+  border-left: 5px solid #d4af37;
+}
+
+.col-rank {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.rank-number {
+  background: #f0f0f0;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-weight: 700;
+  min-width: 45px;
+  text-align: center;
+  color: #004225;
+}
+
+.table-row.podium .rank-number {
+  background: #d4af37;
+  color: white;
+}
+
+.medal {
+  font-size: 1.5rem;
+}
+
+.col-player {
+  font-weight: 600;
+  color: #004225;
+  font-size: 1.05rem;
+}
+
+.col-team {
+  color: #666;
+}
+
+.col-goals {
+  text-align: center;
+}
+
+.goals-badge {
+  background: linear-gradient(135deg, #006b3f 0%, #008f4c 100%);
+  color: white;
+  padding: 8px 18px;
+  border-radius: 20px;
+  font-weight: 700;
+  font-size: 1.1rem;
+  display: inline-block;
+}
+
+/* ---------------------- No Data State ---------------------- */
+.no-data {
+  text-align: center;
+  padding: 80px 20px;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+}
+
+.no-data-icon {
+  font-size: 5rem;
+  color: #d4af37;
+  margin-bottom: 20px;
+}
+
+.no-data h3 {
+  color: #004225;
+  font-size: 2rem;
+  margin-bottom: 15px;
+}
+
+.no-data p {
+  color: #666;
+  font-size: 1.1rem;
+  line-height: 1.8;
+  margin: 10px 0;
+}
+
+.loading-container {
+  text-align: center;
+  padding: 100px 20px;
+  color: #004225;
+}
+
+/* ---------------------- Responsive ---------------------- */
+@media (max-width: 768px) {
+  .hero-title {
+    font-size: 2.2em;
+    flex-direction: column;
+  }
+
+  .stats-summary {
+    gap: 15px;
+  }
+
+  .stat-box {
+    min-width: 150px;
+    padding: 20px 30px;
+  }
+
+  .podium {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .podium-card {
+    width: 100%;
+    max-width: 300px;
+  }
+
+  .podium-card.first {
+    order: -1;
+  }
+
+  .table-header,
+  .table-row {
+    grid-template-columns: 80px 1fr 100px;
+    font-size: 0.9rem;
+  }
+
+  .col-team {
+    display: none;
+  }
+
+  .section-title {
+    font-size: 1.8em;
+  }
+}

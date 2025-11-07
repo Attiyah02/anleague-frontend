@@ -4,12 +4,13 @@ import { getFirestore } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  apiKey: "AIzaSyBhZSZBjDvA-3TjPvnylpphipiNd7J2v8w",
+  authDomain: "anleague2026.firebaseapp.com",
+  projectId: "anleague2026",
+  storageBucket: "anleague2026.firebasestorage.app",
+  messagingSenderId: "342014639795",
+  appId: "1:342014639795:web:6ee3d9255839b28937bac6",
+  measurementId: "G-2ZPHD4PTC8"
 };
 
 const app = initializeApp(firebaseConfig);
